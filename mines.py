@@ -12,9 +12,9 @@ class Cell:
         self.hasMine = False
         self.minesAround = 0
 
-    def __str__(self):
+    def getData(self):
         if self.state == State.CLOSED:
-            return '?'
+            return ' '
 
         if self.state == State.FLAGGED:
             return '⚑'
@@ -22,7 +22,11 @@ class Cell:
         if self.hasMine:
             return '💣'
 
-        return ' ' if self.minesAround == 0 else str(self.minesAround)
+        if self.minesAround != 0:
+            return str(self.minesAround)
+
+        return ' '
+
 
 
 class Field:
@@ -39,9 +43,12 @@ class Field:
 
         self.minesCount = int(self.rows * self.columns * 15 / 100)
         for m in range(self.minesCount):
-            r = random.randint(0, self.rows - 1)
-            c = random.randint(0, self.columns - 1)
-            self.cells[r][c].hasMine = True
+            while True:
+                r = random.randint(0, self.rows - 1)
+                c = random.randint(0, self.columns - 1)
+                if not self.cells[r][c].hasMine:
+                    self.cells[r][c].hasMine = True
+                    break
 
         nbix = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
         for r in range(self.rows):
@@ -59,25 +66,16 @@ class Field:
                 self.cells[r][c].minesAround = count
 
 
-    def forEachCell(self, action):
-        for r in range(self.rows):
-            for c in range(self.columns):
-                action(self.cells[r][c])
-
-
     def open(self, row, column):
         cell = self.cells[row][column]
         if cell.state == State.CLOSED:
             cell.state = State.OPEN
 
             if cell.hasMine:
-                def g(c): c.state = State.OPEN
-                self.forEachCell(g)
-
-                #for r in range(self.rows):
-                #    for c in range(self.columns):
-                #        if self.cells[r][c].hasMine:
-                #            self.cells[r][c].state = State.OPEN
+                for r in range(self.rows):
+                    for c in range(self.columns):
+                        if self.cells[r][c].hasMine:
+                            self.cells[r][c].state = State.OPEN
 
             if not cell.hasMine and cell.minesAround == 0:
                 for (dr, dc) in [(0, -1), (-1, 0), (1, 0), (0, 1)]:
@@ -85,7 +83,6 @@ class Field:
                     c = column + dc
                     if r in range(self.rows) and c in range(self.columns):
                         self.open(r, c)
-
 
 
     def flag(self, row, column):
@@ -97,5 +94,5 @@ class Field:
 
 
     def getData(self, row, column):
-        return str(self.cells[row][column])
+        return self.cells[row][column].state, self.cells[row][column].getData()
 

@@ -7,9 +7,7 @@ from mines import Field
 #
 def main():
     app = QApplication(sys.argv)
-
-    game = Field(10, 10)
-    win = Window(game)
+    win = Window()
     win.show()
     sys.exit(app.exec_())
 
