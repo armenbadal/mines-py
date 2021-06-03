@@ -1,7 +1,7 @@
 
 from mines import Field, State
 from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QMainWindow, QMenu, QMenuBar, QWidget
 
 
@@ -40,8 +40,9 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.model = Field(10, 10)
+        self.model = Field(10, 16)
 
+        self.setWindowIcon(QIcon('main-icon.png'))
         self.setWindowTitle('Ականներ')
 
         self.createActions()

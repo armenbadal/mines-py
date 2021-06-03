@@ -30,40 +30,42 @@ class Cell:
 
 
 class Field:
+    DELTAS = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+
     def __init__(self, rows, columns):
+        # տողերի քանակը
         self.rows = rows
+        # սյուների քանակը
         self.columns = columns
 
-        self.cells = []
-        for r in range(self.rows):
-            row = []
-            for c in range(self.columns):
-                row.append(Cell())
-            self.cells.append(row)
+        # ականակետերի մատրիցը
+        self.cells = [[Cell() for c in range(self.columns)] for r in range(self.rows)]
 
+        # ականների տաղադրելը պատահական վանդակներում
         self.minesCount = int(self.rows * self.columns * 15 / 100)
         for m in range(self.minesCount):
-            while True:
-                r = random.randint(0, self.rows - 1)
-                c = random.randint(0, self.columns - 1)
-                if not self.cells[r][c].hasMine:
-                    self.cells[r][c].hasMine = True
-                    break
+            r, c = self._placeRandomMine()
+            self._updateNumbersAround(r, c)
 
-        nbix = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
-        for r in range(self.rows):
-            for c in range(self.columns):
-                if self.cells[r][c].hasMine:
-                    continue
 
-                count = 0
-                for (dr, dc) in nbix:
-                    nr = r + dr
-                    nc = c + dc
-                    if nr in range(self.rows) and nc in range(self.columns):
-                        if self.cells[nr][nc].hasMine:
-                            count += 1
-                self.cells[r][c].minesAround = count
+    # տեղադրել պատահական ական ու վերադարձնել դրա դիրքը
+    def _placeRandomMine(self):
+        r = random.randint(0, self.rows - 1)
+        c = random.randint(0, self.columns - 1)
+
+        if not self.cells[r][c].hasMine:
+            self.cells[r][c].hasMine = True
+            return (r, c)
+
+        return self._placeRandomMine()
+
+
+    # թարմացնել ականին շրջապատող վանդակների թվերը
+    def _updateNumbersAround(self, row, column):
+        for (dr, dc) in Field.DELTAS:
+            nr, nc = row + dr, column + dc
+            if nr in range(self.rows) and nc in range(self.columns):
+                self.cells[nr][nc].minesAround += 1
 
 
     def open(self, row, column):
@@ -78,7 +80,7 @@ class Field:
                             self.cells[r][c].state = State.OPEN
 
             if not cell.hasMine and cell.minesAround == 0:
-                for (dr, dc) in [(0, -1), (-1, 0), (1, 0), (0, 1)]:
+                for (dr, dc) in Field.DELTAS:
                     r = row + dr
                     c = column + dc
                     if r in range(self.rows) and c in range(self.columns):
