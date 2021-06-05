@@ -12,19 +12,19 @@ class Cell:
         self.hasMine = False
         self.minesAround = 0
 
-    def getData(self):
+    def __str__(self):
         if self.state == State.CLOSED:
             return ' '
-
+    
         if self.state == State.FLAGGED:
             return '⚑'
-
+    
         if self.hasMine:
             return '💣'
-
+    
         if self.minesAround != 0:
             return str(self.minesAround)
-
+    
         return ' '
 
 
@@ -41,7 +41,11 @@ class Field:
         # ականակետերի մատրիցը
         self.cells = [[Cell() for c in range(self.columns)] for r in range(self.rows)]
 
-        # ականների տաղադրելը պատահական վանդակներում
+        self._placeAllMines()
+
+
+    # ականների տաղադրելը պատահական վանդակներում
+    def _placeAllMines(self):
         self.minesCount = int(self.rows * self.columns * 15 / 100)
         for m in range(self.minesCount):
             r, c = self._placeRandomMine()
@@ -68,33 +72,44 @@ class Field:
                 self.cells[nr][nc].minesAround += 1
 
 
+    # բացել վանդակը
     def open(self, row, column):
+        # վերցնել վանդակի հղումը
         cell = self.cells[row][column]
+        # եթե վանդակը փակ է, ...
         if cell.state == State.CLOSED:
+            # ... ապա բացել այն
             cell.state = State.OPEN
 
+            # եթե պարզվում է, որ վանդակում ական կա, ...
             if cell.hasMine:
+                # ... ապա բացել բոլոր ականներն ու ...
                 for r in range(self.rows):
                     for c in range(self.columns):
                         if self.cells[r][c].hasMine:
                             self.cells[r][c].state = State.OPEN
+                # ... ավարտել խաղը
+                self.gameOver = True
+            else:
+                # եթե վանդակում ական չկա, ...
+                # ... և նրա հարևաններում էլ ականներ չկան, ...
+                # ... ապա բացել նաև հարևաններին
+                if cell.minesAround == 0:
+                    for (dr, dc) in Field.DELTAS:
+                        r = row + dr
+                        c = column + dc
+                        if r in range(self.rows) and c in range(self.columns):
+                            self.open(r, c)
 
-            if not cell.hasMine and cell.minesAround == 0:
-                for (dr, dc) in Field.DELTAS:
-                    r = row + dr
-                    c = column + dc
-                    if r in range(self.rows) and c in range(self.columns):
-                        self.open(r, c)
 
-
+    # դրոշակով նշել վանդակը
     def flag(self, row, column):
+        # վերցնել վանդակի հղումը
         cell = self.cells[row][column]
+        # եթե վանդակը փակ է, ապա այն նշել դրոշակով
         if cell.state == State.CLOSED:
             cell.state = State.FLAGGED
+        # եթե արդեն նշված է դրոշակով, ապա հանդել այն
         elif cell.state == State.FLAGGED:
             cell.state = State.CLOSED
-
-
-    def getData(self, row, column):
-        return self.cells[row][column].state, self.cells[row][column].getData()
 

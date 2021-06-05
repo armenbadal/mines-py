@@ -4,7 +4,9 @@ from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QMainWindow, QMenu, QMenuBar, QWidget
 
-
+#
+# Մեկ ականի վանդակը որպես QLabel-ի ընդլայնում
+#
 class Place(QLabel):
     open = Signal(int, int)
     flag = Signal(int, int)
@@ -23,11 +25,15 @@ class Place(QLabel):
 
         self.setText(' ')
 
+
+    # որոշել բջջի պարունակությունն ու վիճակը
     def setData(self, state, data):
         if state == State.OPEN:
             self.setFrameShadow(QFrame.Sunken)
         self.setText(data)
 
+
+    # մկնիկի գործողությունների արտապատկերումը սեփական Signal-ների
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.open.emit(self.row, self.column)
@@ -35,7 +41,9 @@ class Place(QLabel):
             self.flag.emit(self.row, self.column)
 
 
-
+#
+# Հիմնական պատուհանը որպես QMainWindow-ի ընդլայնում
+#
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -45,20 +53,26 @@ class Window(QMainWindow):
         self.setWindowIcon(QIcon('main-icon.png'))
         self.setWindowTitle('Ականներ')
 
-        self.createActions()
-        self.createMainMenu()
-        self.setCentralWidget(self.createBoard(self.model.rows, self.model.columns))
+        self._createActions()
+        self._createMainMenu()
+        self.setCentralWidget(self._createBoard(self.model.rows, self.model.columns))
 
 
+    @Slot()
     def newGame(self):
-        pass
+        self.model = Field(10, 16)
+        for row in self.places:
+            for place in row:
+                place.setFrameShadow(QFrame.Raised)
+        self._updateView()
 
-    def createBoard(self, rows, columns):
+
+    def _createBoard(self, rows, columns):
         board = QWidget(self)
 
         grid = QGridLayout(board)
-        grid.setSpacing(1);
-        grid.setContentsMargins(1, 1, 1, 1);
+        grid.setSpacing(0)
+        grid.setContentsMargins(2, 2, 2, 2)
         
         self.places = []
         for r in range(rows):
@@ -73,18 +87,19 @@ class Window(QMainWindow):
             
         return board
 
-    def createActions(self):
+
+    def _createActions(self):
         self.actNew = QAction('Նոր', self)
-        #connect(actNew, SIGNAL(triggered()), this, SLOT(newGame()));
+        self.actNew.triggered.connect(self.newGame)
 
         self.actEnd = QAction('Ելք', self)
-        #connect(actEnd, SIGNAL(triggered()), this, SLOT(close()));
+        self.actEnd.triggered.connect(self.close)
 
         self.actAbout = QAction('Խաղի մասին', self)
         #connect(actAbout, SIGNAL(triggered()), this, SLOT(aboutGame()));
 
 
-    def createMainMenu(self):
+    def _createMainMenu(self):
         mainMenu = QMenuBar(self)
 
         mnuGame = QMenu('Խաղ', mainMenu)
@@ -100,21 +115,19 @@ class Window(QMainWindow):
         self.setMenuBar(mainMenu)
 
 
-    def updateView(self):
+    def _updateView(self):
         for r in range(self.model.rows):
             for c in range(self.model.columns):
-                st, txt = self.model.getData(r, c)
-                self.places[r][c].setData(st, txt)
+                cell = self.model.cells[r][c]
+                self.places[r][c].setData(cell.state, str(cell))
 
 
     @Slot(int, int)
     def opened(self, row, column):
         self.model.open(row, column)
-        self.updateView()
+        self._updateView()
 
     @Slot(int, int)
     def flagged(self, row, column):
         self.model.flag(row, column)
-        self.updateView()
-        
-
+        self._updateView()
