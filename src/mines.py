@@ -40,8 +40,11 @@ class Field:
 
         # ականակետերի մատրիցը
         self.cells = [[Cell() for c in range(self.columns)] for r in range(self.rows)]
-
+        # տեղադրել ականները և կատարել հաշվարկները
         self._placeAllMines()
+
+        # քայլերի հաշվիչ
+        self.stepsCounter = 0
 
 
     # ականների տաղադրելը պատահական վանդակներում
@@ -73,7 +76,7 @@ class Field:
 
 
     # բացել վանդակը
-    def open(self, row, column):
+    def open(self, row, column, count = True):
         # վերցնել վանդակի հղումը
         cell = self.cells[row][column]
         # եթե վանդակը փակ է, ...
@@ -99,7 +102,10 @@ class Field:
                         r = row + dr
                         c = column + dc
                         if r in range(self.rows) and c in range(self.columns):
-                            self.open(r, c)
+                            self.open(r, c, False)
+            # մեկ քայլ
+            if count:
+                self.stepsCounter += 1
 
 
     # դրոշակով նշել վանդակը

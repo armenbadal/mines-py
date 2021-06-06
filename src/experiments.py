@@ -1,25 +1,67 @@
 
-import random
+import sys
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLCDNumber, QLabel, QMainWindow, QPushButton, QSpacerItem, QVBoxLayout, QWidget
 
-class Cell:
+
+class W(QMainWindow):
     def __init__(self):
-        self.number = random.randint(0, 100)
+        super(W, self).__init__()
 
-    def __str__(self):
-        return str(self.number)
+        self.sec = 0
+
+        self._createUi()
+        self._setupTimer()
+
+    def _createUi(self):
+        base = QWidget(self)
+        vbox = QVBoxLayout(base)
+        vbox.setContentsMargins(2, 2, 2, 2)
+
+        upper = QWidget(base)
+        hbox = QHBoxLayout(upper)
+        hbox.setContentsMargins(2, 2, 2, 2)
+        self.steps = QLabel('0')
+        hbox.addWidget(self.steps)
+        hbox.addStretch(1)
+        self.seconds = QLCDNumber()
+        self.seconds.setDigitCount(3)
+        hbox.addWidget(self.seconds)
+        upper.setLayout(hbox)
+        vbox.addWidget(upper)
+
+        lower = QWidget(base)
+        grid = QGridLayout(lower)
+        grid.setSpacing(1)
+        grid.setContentsMargins(2, 2, 2, 2)
+        grid.addWidget(QPushButton('1'), 0, 0)
+        grid.addWidget(QPushButton('2'), 0, 1)
+        grid.addWidget(QPushButton('3'), 0, 2)
+        grid.addWidget(QPushButton('4'), 0, 3)
+        grid.addWidget(QPushButton('1'), 1, 0)
+        grid.addWidget(QPushButton('2'), 1, 1)
+        grid.addWidget(QPushButton('3'), 1, 2)
+        grid.addWidget(QPushButton('4'), 1, 3)
+        lower.setLayout(grid)
+        vbox.addWidget(lower)
+
+        base.setLayout(vbox)
+
+        self.setCentralWidget(base)
 
 
-ROWS = 10
-COLUMNS = 16
-DELTAS = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
-
-mx = [[Cell() for c in range(COLUMNS)] for r in range(ROWS)]
-
-def countGreaterThan(row, column, val):
-    return list(filter(lambda rc: mx[rc[0]][rc[1]].number > val,
-                    filter(lambda rc: rc[0] in range(ROWS) and rc[1] in range(COLUMNS),
-                           map(lambda rc: (row + rc[0], column + rc[1]), DELTAS))))
+    def _setupTimer(self):
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._updateSeconds)
+        self.timer.start(1000)
 
 
-k = countGreaterThan(0, 0, 50)
-print(k)
+    def _updateSeconds(self):
+        self.sec += 1
+        self.seconds.display(str(self.sec))
+
+
+app = QApplication(sys.argv)
+w = W()
+w.show()
+sys.exit(app.exec_())

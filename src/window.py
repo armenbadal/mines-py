@@ -2,7 +2,7 @@
 from mines import Field, State
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QMainWindow, QMenu, QMenuBar, QWidget
+from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLCDNumber, QLabel, QMainWindow, QMenu, QMenuBar, QVBoxLayout, QWidget
 
 #
 # Մեկ ականի վանդակը որպես QLabel-ի ընդլայնում
@@ -49,14 +49,14 @@ class Window(QMainWindow):
         super().__init__()
 
         self.model = Field(10, 16)
+        self.secondsCounter = 0 
 
         self.setWindowIcon(QIcon('main-icon.png'))
         self.setWindowTitle('Ականներ')
 
         self._createActions()
         self._createMainMenu()
-        self.setCentralWidget(self._createBoard(self.model.rows, self.model.columns))
-
+        self._createCentralWidget()
 
     @Slot()
     def newGame(self):
@@ -67,17 +67,41 @@ class Window(QMainWindow):
         self._updateView()
 
 
-    def _createBoard(self, rows, columns):
-        board = QWidget(self)
+    def _createCentralWidget(self):
+        central = QWidget(self)
+        vbox = QVBoxLayout(central)
+        vbox.setContentsMargins(2, 2, 2, 2)
+        wTop = self._createInfoBoard(central)
+        vbox.addWidget(wTop)
+        wBottom = self._createGameBoard(central)
+        vbox.addWidget(wBottom)
+        self.setCentralWidget(central)
+
+
+    def _createInfoBoard(self, central):
+        info = QWidget(central)
+        hbox = QHBoxLayout(info)
+        hbox.setContentsMargins(2, 2, 2, 2)
+        self.steps = QLCDNumber(info)
+        self.steps.setSegmentStyle(QLCDNumber.Filled)
+        hbox.addWidget(self.steps)
+        hbox.addStretch(1)
+        self.seconds = QLCDNumber(info)
+        hbox.addWidget(self.seconds)
+        return info
+
+
+    def _createGameBoard(self, central):
+        board = QWidget(central)
 
         grid = QGridLayout(board)
         grid.setSpacing(0)
         grid.setContentsMargins(2, 2, 2, 2)
         
         self.places = []
-        for r in range(rows):
+        for r in range(self.model.rows):
             rw = []
-            for c in range(columns):
+            for c in range(self.model.columns):
                 pl = Place(r, c)
                 pl.open.connect(self.opened)
                 pl.flag.connect(self.flagged)
@@ -120,6 +144,8 @@ class Window(QMainWindow):
             for c in range(self.model.columns):
                 cell = self.model.cells[r][c]
                 self.places[r][c].setData(cell.state, str(cell))
+        
+        self.steps.display(str(self.model.stepsCounter))
 
 
     @Slot(int, int)
